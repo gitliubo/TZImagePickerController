@@ -74,11 +74,26 @@
     if ([self respondsToSelector:@selector(snapshotViewAfterScreenUpdates:)]) {
         cellSnapshotView = [self snapshotViewAfterScreenUpdates:NO];
     } else {
+        
+        UIImage *cellSnapshotImage;
         CGSize size = CGSizeMake(self.bounds.size.width + 20, self.bounds.size.height + 20);
-        UIGraphicsBeginImageContextWithOptions(size, self.opaque, 0);
-        [self.layer renderInContext:UIGraphicsGetCurrentContext()];
-        UIImage * cellSnapshotImage = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
+        if (@available(iOS 17.0, *)) {
+            UIGraphicsImageRendererFormat *format = [[UIGraphicsImageRendererFormat alloc] init];
+            format.opaque = NO;
+            format.scale = [UIScreen mainScreen].scale;
+                
+            UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
+            cellSnapshotImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull rendererContext) {
+                UIGraphicsBeginImageContextWithOptions(size, self.opaque, 0);
+                [self.layer renderInContext:UIGraphicsGetCurrentContext()];
+            }];
+        } else {
+            UIGraphicsBeginImageContextWithOptions(size, self.opaque, 0);
+            [self.layer renderInContext:UIGraphicsGetCurrentContext()];
+            cellSnapshotImage = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+        }
+        
         cellSnapshotView = [[UIImageView alloc]initWithImage:cellSnapshotImage];
     }
     

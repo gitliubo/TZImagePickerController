@@ -98,17 +98,35 @@
 
 /// 获取圆形图片
 + (UIImage *)circularClipImage:(UIImage *)image {
-    UIGraphicsBeginImageContextWithOptions(image.size, NO, [UIScreen mainScreen].scale);
+    UIImage *circleImage;
+    if (@available(iOS 17.0, *)) {
+        UIGraphicsImageRendererFormat *format = [[UIGraphicsImageRendererFormat alloc] init];
+        format.opaque = NO;
+        format.scale = [UIScreen mainScreen].scale;
+            
+        UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:image.size format:format];
+        circleImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull rendererContext) {
+            CGContextRef ctx = UIGraphicsGetCurrentContext();
+            CGRect rect = CGRectMake(0, 0, image.size.width, image.size.height);
+            CGContextAddEllipseInRect(ctx, rect);
+            CGContextClip(ctx);
+            
+            [image drawInRect:rect];
+        }];
+    } else {
+        UIGraphicsBeginImageContextWithOptions(image.size, NO, [UIScreen mainScreen].scale);
+        
+        CGContextRef ctx = UIGraphicsGetCurrentContext();
+        CGRect rect = CGRectMake(0, 0, image.size.width, image.size.height);
+        CGContextAddEllipseInRect(ctx, rect);
+        CGContextClip(ctx);
+        
+        [image drawInRect:rect];
+        circleImage = UIGraphicsGetImageFromCurrentImageContext();
+        
+        UIGraphicsEndImageContext();
+    }
     
-    CGContextRef ctx = UIGraphicsGetCurrentContext();
-    CGRect rect = CGRectMake(0, 0, image.size.width, image.size.height);
-    CGContextAddEllipseInRect(ctx, rect);
-    CGContextClip(ctx);
-    
-    [image drawInRect:rect];
-    UIImage *circleImage = UIGraphicsGetImageFromCurrentImageContext();
-    
-    UIGraphicsEndImageContext();
     return circleImage;
 }
 
